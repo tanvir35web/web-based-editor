@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300..900;1,300..900&family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,400&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,900;1,400&family=Montserrat:ital,wght@0,300..900;1,300..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+
+  --color-surface-0: #0b0c0f;
+  --color-surface-1: #131519;
+  --color-surface-2: #1a1d23;
+  --color-surface-3: #23262e;
+  --color-surface-border: #2c2f38;
+
+  --color-accent: #6366f1;
+  --color-accent-hover: #7477f3;
+  --color-accent-fg: #ffffff;
+
+  --color-text-primary: #e7e8ea;
+  --color-text-secondary: #9a9ea8;
+  --color-text-muted: #6b6f79;
+
+  --color-danger: #ef4444;
+  --color-danger-hover: #f65f5f;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-surface-0);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-accent) 40%, transparent);
+}
+
+/* Slim, editor-style scrollbars */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-3) transparent;
+}
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: var(--color-surface-3);
+  border-radius: 999px;
+}
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Checkerboard pattern to indicate transparency in canvas background/exports */
+.bg-transparency-grid {
+  background-image:
+    linear-gradient(45deg, #3a3d45 25%, transparent 25%),
+    linear-gradient(-45deg, #3a3d45 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #3a3d45 75%),
+    linear-gradient(-45deg, transparent 75%, #3a3d45 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  background-color: #2a2d34;
+}
