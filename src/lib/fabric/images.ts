@@ -1,6 +1,7 @@
 import { FabricImage, type Canvas } from 'fabric'
 import { computeFitScale } from '../utils/scaling'
 import { tagObject, type EditorFabricObject } from './objects'
+import { getDocumentDimensions } from './canvas'
 import { createDefaultAdjustments } from '../editor/defaults'
 import { applyAdjustments } from './filters'
 import type { AdjustmentValues } from '../../types/objects'
@@ -11,16 +12,19 @@ export type EditorImageObject = FabricImage & EditorFabricObject & { adjustments
 
 export async function addImageFromUrl(canvas: Canvas, url: string, name = 'Image'): Promise<EditorImageObject> {
   const image = await FabricImage.fromURL(url, { crossOrigin: 'anonymous' })
-  const canvasWidth = canvas.getWidth()
-  const canvasHeight = canvas.getHeight()
+  // Document space, not `canvas.getWidth()`/`getHeight()` — those return the
+  // zoom-scaled canvas element size (see getDocumentDimensions), and using
+  // them here would fit/center the image relative to the wrong scale
+  // whenever the user isn't at 100% zoom.
+  const { width: docWidth, height: docHeight } = getDocumentDimensions(canvas)
   const scale = computeFitScale(
     { width: image.width, height: image.height },
-    { width: canvasWidth * FIT_MARGIN_RATIO, height: canvasHeight * FIT_MARGIN_RATIO },
+    { width: docWidth * FIT_MARGIN_RATIO, height: docHeight * FIT_MARGIN_RATIO },
   )
 
   image.set({
-    left: canvasWidth / 2,
-    top: canvasHeight / 2,
+    left: docWidth / 2,
+    top: docHeight / 2,
     originX: 'center',
     originY: 'center',
     scaleX: scale,

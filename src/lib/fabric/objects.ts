@@ -1,4 +1,5 @@
 import { Point, type Canvas, type FabricObject } from 'fabric'
+import { getDocumentDimensions } from './canvas'
 import type { EditorObjectMeta, EditorObjectType } from '../../types/objects'
 
 /**
@@ -123,7 +124,8 @@ export function alignObjects(
 ): void {
   if (objects.length === 0) return
   const bounds = objects.map((obj) => obj.getBoundingRect())
-  const canvasBounds = { width: canvas.getWidth(), height: canvas.getHeight() }
+  // Document space, not `canvas.getWidth()`/`getHeight()` — see getDocumentDimensions.
+  const canvasBounds = getDocumentDimensions(canvas)
   const useSelectionBounds = objects.length > 1
   const minLeft = useSelectionBounds ? Math.min(...bounds.map((b) => b.left)) : 0
   const maxRight = useSelectionBounds

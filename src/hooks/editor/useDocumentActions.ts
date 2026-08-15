@@ -47,8 +47,11 @@ export function useDocumentActions() {
       setLoading(true, 'Uploading image...')
       const objectUrl = URL.createObjectURL(file)
       try {
+        // No explicit history call needed here: adding the image fires
+        // Fabric's 'object:added' event, which CanvasEditor already turns
+        // into a pushState() — calling initHistory() again would wipe out
+        // any undo history from changes made before this upload.
         await addImageFromUrl(canvas, objectUrl, file.name.replace(/\.[^.]+$/, ''))
-        initHistory()
       } catch {
         setError('Could not load this image. Try a different file.')
       } finally {
@@ -56,7 +59,7 @@ export function useDocumentActions() {
         setLoading(false)
       }
     },
-    [canvasRef, setError, setLoading, initHistory],
+    [canvasRef, setError, setLoading],
   )
 
   const uploadImage = useCallback(

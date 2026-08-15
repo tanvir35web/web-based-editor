@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { Canvas, Rect } from 'fabric'
+import { Canvas, Rect, ActiveSelection } from 'fabric'
 import { applyClippingMask, releaseClippingMask, hasClippingMask } from './clipping'
 import { tagObject, asEditorObject } from './objects'
 
@@ -35,6 +35,31 @@ describe('applyClippingMask', () => {
 
     expect(content.clipPath).not.toBe(mask)
     expect(content.clipPath?.absolutePositioned).toBe(true)
+  })
+
+  it('produces a correctly-positioned clip even when mask/content were just part of a multi-selection', async () => {
+    // Regression test: selecting both objects (as the real "Create Clipping
+    // Mask" button's Ctrl+A / shift-click flow does) wraps them in an
+    // ActiveSelection, which reparents them under a group and rewrites their
+    // left/top to be group-relative. Cloning the mask before clearing that
+    // selection would capture the wrong (group-relative) position.
+    const canvas = makeCanvas()
+    const mask = tagObject(
+      new Rect({ left: 400, top: 300, width: 100, height: 100, originX: 'center', originY: 'center' }),
+      { name: 'Mask', type: 'rect' },
+    )
+    const content = tagObject(
+      new Rect({ left: 400, top: 300, width: 200, height: 200, originX: 'center', originY: 'center' }),
+      { name: 'Content', type: 'rect' },
+    )
+    canvas.add(content, mask)
+    canvas.setActiveObject(new ActiveSelection([content, mask], { canvas }))
+
+    await applyClippingMask(canvas, mask, content)
+
+    expect(content.group).toBeFalsy()
+    expect(content.clipPath!.left).toBeCloseTo(400)
+    expect(content.clipPath!.top).toBeCloseTo(300)
   })
 })
 

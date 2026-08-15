@@ -20,12 +20,23 @@ interface ClippedObject extends EditorFabricObject {
  * `releaseClippingMask` can restore a proper, re-tagged object later.
  */
 export async function applyClippingMask(canvas: Canvas, maskObject: FabricObject, contentObject: FabricObject): Promise<void> {
+  // Both objects are still part of the just-active multi-selection
+  // (ActiveSelection) at this point, which reparents them under a group and
+  // rewrites their left/top to be group-relative rather than absolute —
+  // clearing the selection first (before reading/cloning anything) ensures
+  // everything below works with each object's true canvas-space transform.
+  canvas.discardActiveObject()
+
   const maskMeta = getObjectMeta(maskObject)
   const maskClone = await maskObject.clone()
   maskClone.set({ absolutePositioned: true })
 
   contentObject.set({ clipPath: maskClone } as Partial<FabricObject>)
   ;(asEditorObject(contentObject) as ClippedObject).clipMaskMeta = { type: maskMeta.type, name: maskMeta.name }
+  // `clipPath` isn't one of Fabric's `cacheProperties`, so `.set()` doesn't
+  // mark the object dirty on its own — without this it can keep rendering
+  // its pre-clip cached bitmap.
+  contentObject.set('dirty', true)
 
   canvas.remove(maskObject)
   canvas.setActiveObject(contentObject)
@@ -49,6 +60,7 @@ export async function releaseClippingMask(canvas: Canvas, contentObject: FabricO
 
   contentObject.set({ clipPath: undefined } as Partial<FabricObject>)
   ;(asEditorObject(contentObject) as ClippedObject).clipMaskMeta = undefined
+  contentObject.set('dirty', true)
 
   canvas.add(restored)
   canvas.setActiveObject(restored)

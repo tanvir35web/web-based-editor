@@ -2,13 +2,15 @@ import { Circle, PencilBrush, Rect, Triangle, type Canvas, type FabricObject } f
 import { createDefaultShapeProps } from '../editor/defaults'
 import { EDITOR_DEFAULTS } from '../editor/constants'
 import { tagObject, type EditorFabricObject } from './objects'
+import { getDocumentDimensions } from './canvas'
 import type { ShapeObjectProps, ShapeType } from '../../types/objects'
 
 const DEFAULT_SIZE = 160
 
 function placeAtCenter(canvas: Canvas, object: FabricObject): void {
-  const center = canvas.getCenterPoint()
-  object.set({ left: center.x, top: center.y, originX: 'center', originY: 'center' })
+  // Document space, not `canvas.getCenterPoint()` — see getDocumentDimensions.
+  const { width, height } = getDocumentDimensions(canvas)
+  object.set({ left: width / 2, top: height / 2, originX: 'center', originY: 'center' })
 }
 
 function addShape(canvas: Canvas, object: FabricObject, name: string, type: ShapeType): EditorFabricObject {

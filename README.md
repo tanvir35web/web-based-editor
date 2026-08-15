@@ -1,6 +1,6 @@
 # Artboard Editor
 
-A browser-based photo and graphic design editor — image adjustments, text, layers, undo/redo, zoom/pan, and PNG/JPEG export, built on React 19, TypeScript, Zustand, and Fabric.js.
+A browser-based photo and graphic design editor — image adjustments and cropping, text, shapes (with freehand drawing), clipping masks, layers, undo/redo, zoom/pan, and PNG/JPEG export, built on React 19, TypeScript, Zustand, and Fabric.js.
 
 ## Architecture
 
@@ -28,6 +28,14 @@ Each image object carries a plain `adjustments` object (brightness, contrast, sa
 
 `useEditorHistory` keeps a single array of serialized document snapshots plus a cursor (not two separate undo/redo stacks) in `historyRef` — shared across every component that calls the hook, since the array itself lives in context, not in a component-local ref. `pushState()` captures a snapshot and truncates anything after the cursor (the standard "branch is discarded once you make a new change after undoing" behavior). Continuous interactions (slider drags) call the debounced `commitHistory()` instead of `pushState()` directly, so dragging brightness from 0 to 50 produces one history entry, not fifty.
 
+### Document space vs. zoom-scaled canvas size — a gotcha
+
+`useCanvasZoom`'s `applyCanvasZoom` resizes the actual canvas element to `documentSize * zoom` so the artboard visually shrinks/grows to fit its container. That means **`canvas.getWidth()`/`getHeight()`/`getCenterPoint()` return the zoom-scaled size, not the true document size** — anything that places or measures objects in document space (adding text/images/shapes at "canvas center", fitting an image, serializing width/height for undo/redo or save) must use `lib/fabric/canvas.ts#getDocumentDimensions(canvas)` instead, which divides back out by the current zoom. Using the raw getters here is an easy mistake that only shows up as a visible offset once zoom isn't 100% — every such call site in this codebase has a comment pointing back here.
+
+### Clipping masks and multi-selection — another gotcha
+
+`applyClippingMask` (`lib/fabric/clipping.ts`) is invoked right after the user multi-selects two objects, which means both are still parented under Fabric's `ActiveSelection` (a temporary group) at that moment — a group rewrites its children's `left`/`top` to be group-relative. Cloning the mask object before clearing that selection captures the wrong (group-relative) position, silently placing the clip everywhere except where it should be. `applyClippingMask` calls `canvas.discardActiveObject()` *first*, before reading/cloning anything, to guard against this — see `clipping.test.ts`'s regression test for the exact failure mode.
+
 ### Non-negotiable boundaries
 
 - The Fabric canvas instance is never stored in Zustand.
@@ -41,8 +49,8 @@ src/
   pages/                     Home and Editor routes
   components/editor/         Editor.tsx (shell) + layout (Header/Sidebar/PropertiesPanel/StatusBar)
     canvas/                  CanvasEditor (owns the Fabric instance), CanvasContainer, Zoom/CanvasControls
-    panels/                  Upload/Text/Adjustments/Layers/Background/Export — left-rail + contextual content
-    objects/                 Position/Size/Rotation/Text/Image controls, Alignment — reusable per selected object
+    panels/                  Upload/Text/Shapes/Adjustments/Layers/Background/Export — left-rail + contextual content
+    objects/                 Position/Size/Rotation/Text/Image/Shape controls, Alignment, Clipping mask, Crop mode
     dialogs/                 NewCanvasDialog, ExportDialog
   components/common/         Design system: Button, IconButton, Slider, ColorPicker, Select, Modal, Tabs, NumberInput, Tooltip
   hooks/editor/               One hook per concern — see below
@@ -88,4 +96,4 @@ Tests are colocated with the code they cover (`*.test.ts`/`*.test.tsx`). Hook an
 
 ## Deliberately out of scope for this pass
 
-Shapes/icons/SVG library, pen/draw tool, crop/mask, gradients/shadows/borders, blend modes, templates, multi-page/frames, rulers/guides/grid/snapping, cloud save, auth, real-time collaboration, and AI features are not implemented. The object-type union, command layer, and store boundaries are structured so these can be added incrementally without a rewrite — see "Extending the editor" above.
+Icon/SVG library, precise anchor-point bezier pen tool (freehand drawing via `PencilBrush` is implemented, see `lib/fabric/shapes.ts#startFreeDraw`), gradients/shadows/borders, blend modes, templates, multi-page/frames, rulers/guides/grid/snapping, cloud save, auth, real-time collaboration, and AI features are not implemented. The object-type union, command layer, and store boundaries are structured so these can be added incrementally without a rewrite — see "Extending the editor" above.

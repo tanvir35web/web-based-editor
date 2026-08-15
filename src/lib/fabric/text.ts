@@ -2,12 +2,15 @@ import { Textbox, type Canvas } from 'fabric'
 import { createDefaultTextProps } from '../editor/defaults'
 import type { TextObjectProps } from '../../types/objects'
 import { tagObject, type EditorFabricObject } from './objects'
+import { getDocumentDimensions } from './canvas'
 
 const DEFAULT_TEXT_WIDTH = 320
 
 export function addText(canvas: Canvas, text = 'Type something...'): EditorFabricObject {
   const props = createDefaultTextProps()
-  const center = canvas.getCenterPoint()
+  // Document space, not `canvas.getCenterPoint()` — see getDocumentDimensions.
+  const { width: docWidth, height: docHeight } = getDocumentDimensions(canvas)
+  const center = { x: docWidth / 2, y: docHeight / 2 }
   const textbox = new Textbox(text, {
     left: center.x,
     top: center.y,
