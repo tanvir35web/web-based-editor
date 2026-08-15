@@ -25,7 +25,7 @@ describe('applyClippingMask', () => {
     expect(canvas.getActiveObject()).toBe(content)
   })
 
-  it('the clip path is a detached, absolutely-positioned clone (not the original mask instance)', async () => {
+  it('the clip path is a detached clone (not the original mask instance), positioned relative to the content object', async () => {
     const canvas = makeCanvas()
     const mask = tagObject(new Rect({ left: 10, top: 10, width: 30, height: 30 }), { name: 'Mask', type: 'rect' })
     const content = tagObject(new Rect({ width: 100, height: 100 }), { name: 'Content', type: 'rect' })
@@ -34,7 +34,9 @@ describe('applyClippingMask', () => {
     await applyClippingMask(canvas, mask, content)
 
     expect(content.clipPath).not.toBe(mask)
-    expect(content.clipPath?.absolutePositioned).toBe(true)
+    // Relative (not absolute) positioning is what makes the clip travel with
+    // the content object when it's later moved/rotated/scaled.
+    expect(content.clipPath?.absolutePositioned).toBeFalsy()
   })
 
   it('produces a correctly-positioned clip even when mask/content were just part of a multi-selection', async () => {
@@ -58,8 +60,40 @@ describe('applyClippingMask', () => {
     await applyClippingMask(canvas, mask, content)
 
     expect(content.group).toBeFalsy()
-    expect(content.clipPath!.left).toBeCloseTo(400)
-    expect(content.clipPath!.top).toBeCloseTo(300)
+    // Mask and content share the same center, so the clip's position
+    // relative to the content object should land on (0, 0) — not offset by
+    // whatever the (now-discarded) selection group's coordinate frame was.
+    expect(content.clipPath!.left).toBeCloseTo(0)
+    expect(content.clipPath!.top).toBeCloseTo(0)
+  })
+
+  it('keeps the clip attached to the content object when the object is moved', async () => {
+    // This is the behavior a user actually sees: dragging the clipped object
+    // should move the visible "window" along with it, not leave it pinned to
+    // its original canvas position.
+    const canvas = makeCanvas()
+    const mask = tagObject(
+      new Rect({ left: 380, top: 280, width: 60, height: 60, originX: 'center', originY: 'center' }),
+      { name: 'Mask', type: 'rect' },
+    )
+    const content = tagObject(
+      new Rect({ left: 400, top: 300, width: 200, height: 200, originX: 'center', originY: 'center' }),
+      { name: 'Content', type: 'rect' },
+    )
+    canvas.add(content, mask)
+
+    await applyClippingMask(canvas, mask, content)
+    const clipLeftBefore = content.clipPath!.left
+    const clipTopBefore = content.clipPath!.top
+
+    content.set({ left: 700, top: 500 })
+    content.setCoords()
+
+    // The clip's own (relative) coordinates are untouched by moving its
+    // parent — Fabric recomposes the clip against the object's *current*
+    // transform on every render, so no manual resync is needed.
+    expect(content.clipPath!.left).toBeCloseTo(clipLeftBefore)
+    expect(content.clipPath!.top).toBeCloseTo(clipTopBefore)
   })
 })
 

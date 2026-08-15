@@ -1,4 +1,4 @@
-import type { Canvas, FabricObject } from 'fabric'
+import { util, type Canvas, type FabricObject } from 'fabric'
 import { asEditorObject, getObjectMeta, tagObject, type EditorFabricObject } from './objects'
 import type { EditorObjectType } from '../../types/objects'
 
@@ -14,10 +14,10 @@ interface ClippedObject extends EditorFabricObject {
 /**
  * Illustrator/Figma-style clipping mask: the topmost of two selected objects
  * defines the visible region for the one below it. The mask shape is cloned
- * (Fabric requires a clipPath to be a detached object instance, in its own
- * absolute canvas coordinates) and removed from the canvas as an independent
- * object — its original type/name are stashed on the content object so
- * `releaseClippingMask` can restore a proper, re-tagged object later.
+ * (Fabric requires a clipPath to be a detached object instance) and removed
+ * from the canvas as an independent object — its original type/name are
+ * stashed on the content object so `releaseClippingMask` can restore a
+ * proper, re-tagged object later.
  */
 export async function applyClippingMask(canvas: Canvas, maskObject: FabricObject, contentObject: FabricObject): Promise<void> {
   // Both objects are still part of the just-active multi-selection
@@ -29,7 +29,14 @@ export async function applyClippingMask(canvas: Canvas, maskObject: FabricObject
 
   const maskMeta = getObjectMeta(maskObject)
   const maskClone = await maskObject.clone()
-  maskClone.set({ absolutePositioned: true })
+  // Move the clip from canvas/world space into the content object's own
+  // local space, preserving its current visual appearance exactly (Fabric's
+  // documented pattern for handing a clipPath to a specific object — see
+  // sendObjectToPlane's JSDoc). This is what makes the mask travel with the
+  // content object afterward: move/rotate/scale the object and the clip
+  // moves/rotates/scales right along with it, instead of staying pinned to
+  // its original canvas position (which `absolutePositioned: true` would do).
+  util.sendObjectToPlane(maskClone, undefined, contentObject.calcTransformMatrix())
 
   contentObject.set({ clipPath: maskClone } as Partial<FabricObject>)
   ;(asEditorObject(contentObject) as ClippedObject).clipMaskMeta = { type: maskMeta.type, name: maskMeta.name }
@@ -56,6 +63,10 @@ export async function releaseClippingMask(canvas: Canvas, contentObject: FabricO
   // than the one our helpers expect — the clone is a plain detached object
   // either way, so this cast is safe.
   const restored = (await clipPath.clone()) as FabricObject
+  // Reverse of applyClippingMask's sendObjectToPlane call: convert back from
+  // the content object's local space to canvas/world space, so it becomes a
+  // normal independent object again in the same place it visually appeared.
+  util.sendObjectToPlane(restored, contentObject.calcTransformMatrix(), undefined)
   tagObject(restored, { name: meta?.name ?? 'Mask Shape', type: meta?.type ?? 'rect' })
 
   contentObject.set({ clipPath: undefined } as Partial<FabricObject>)
