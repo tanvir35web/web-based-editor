@@ -7,6 +7,9 @@ import { tagFreeDrawnPath } from '../../../lib/fabric/shapes'
 import { useSelectionStore } from '../../../stores/editor/selectionStore'
 import { useEditorStore } from '../../../stores/editor/editorStore'
 import { useEditorHistory } from '../../../hooks/editor/useEditorHistory'
+import { useSnapping } from '../../../hooks/editor/useSnapping'
+import { usePenTool } from '../../../hooks/editor/usePenTool'
+import { SnapGuidesOverlay } from './SnapGuidesOverlay'
 import type { SelectionInfo } from '../../../types/editor'
 
 function computeSelectionInfo(canvas: Canvas): SelectionInfo {
@@ -27,6 +30,8 @@ export function CanvasEditor() {
   const clearSelection = useSelectionStore((s) => s.clearSelection)
   const bumpObjectsVersion = useEditorStore((s) => s.bumpObjectsVersion)
   const { pushState } = useEditorHistory()
+  const { handleObjectMoving, clearGuides, guides } = useSnapping()
+  const { handleMouseDown, handleMouseMove, handleMouseUp, handleDblClick } = usePenTool()
 
   useEffect(() => {
     const el = canvasElRef.current
@@ -46,6 +51,7 @@ export function CanvasEditor() {
       pushState()
     }
     const handleObjectModified = () => {
+      clearGuides()
       if (historyRef.current.isRestoring) return
       setSelection(computeSelectionInfo(canvas))
       pushState()
@@ -63,6 +69,12 @@ export function CanvasEditor() {
     canvas.on('object:added', handleObjectMutated)
     canvas.on('object:removed', handleObjectMutated)
     canvas.on('object:modified', handleObjectModified)
+    canvas.on('object:moving', handleObjectMoving)
+    canvas.on('mouse:up', clearGuides)
+    canvas.on('mouse:down', handleMouseDown)
+    canvas.on('mouse:move', handleMouseMove)
+    canvas.on('mouse:up', handleMouseUp)
+    canvas.on('mouse:dblclick', handleDblClick)
     canvas.on('before:path:created', handleBeforePathCreated)
 
     return () => {
@@ -72,14 +84,29 @@ export function CanvasEditor() {
       canvas.off('object:added', handleObjectMutated)
       canvas.off('object:removed', handleObjectMutated)
       canvas.off('object:modified', handleObjectModified)
+      canvas.off('object:moving', handleObjectMoving)
+      canvas.off('mouse:up', clearGuides)
+      canvas.off('mouse:down', handleMouseDown)
+      canvas.off('mouse:move', handleMouseMove)
+      canvas.off('mouse:up', handleMouseUp)
+      canvas.off('mouse:dblclick', handleDblClick)
       canvas.off('before:path:created', handleBeforePathCreated)
       registerCanvas(null)
       disposeFabricCanvas(canvas)
     }
     // Canvas lifecycle should run exactly once per mount — all handlers close
     // over stable store setters / refs, not over changing render-time values.
+    // handleObjectMoving/clearGuides (useSnapping) and the pen-tool handlers
+    // (usePenTool) are themselves stable across renders (they only depend on
+    // stable refs, reading any reactive flag fresh via getState() inside the
+    // callback instead), so they're safe to omit from deps here too.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  return <canvas ref={canvasElRef} className="block" />
+  return (
+    <div className="relative">
+      <canvas ref={canvasElRef} className="block" />
+      <SnapGuidesOverlay guides={guides} />
+    </div>
+  )
 }

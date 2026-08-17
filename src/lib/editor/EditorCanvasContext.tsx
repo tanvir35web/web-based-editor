@@ -1,6 +1,8 @@
 /* eslint-disable react-refresh/only-export-components -- Provider + its consumer hook are conventionally colocated */
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { Canvas, FabricImage, Rect } from 'fabric'
+import type { PagesStateRef } from '../fabric/pages'
+import type { PenToolStateRef } from '../fabric/penTool'
 
 export interface HistoryStackRef {
   snapshots: string[]
@@ -37,6 +39,10 @@ interface EditorCanvasContextValue {
   historyRef: React.RefObject<HistoryStackRef>
   /** Transient state for an in-progress crop session — see useImageCrop. */
   cropRef: React.RefObject<CropStateRef>
+  /** Every page's content while it isn't the live canvas's — see lib/fabric/pages.ts. */
+  pagesRef: React.RefObject<PagesStateRef>
+  /** Transient state for an in-progress pen-tool drawing session — see usePenTool. */
+  penToolRef: React.RefObject<PenToolStateRef>
 }
 
 const EditorCanvasContext = createContext<EditorCanvasContextValue | null>(null)
@@ -46,6 +52,16 @@ export function EditorCanvasProvider({ children }: { children: ReactNode }) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const historyRef = useRef<HistoryStackRef>({ snapshots: [], cursor: -1, isRestoring: false })
   const cropRef = useRef<CropStateRef>({ targetImage: null, cropRect: null, previewImage: null, original: null })
+  const pagesRef = useRef<PagesStateRef>({ pages: [], activePageId: null })
+  const penToolRef = useRef<PenToolStateRef>({
+    points: [],
+    previewPath: null,
+    anchorMarkers: [],
+    rubberBandPoint: null,
+    isDraggingHandle: false,
+    strokeColor: '#111111',
+    strokeWidth: 4,
+  })
   const [isReady, setIsReady] = useState(false)
 
   const registerCanvas = useCallback((canvas: Canvas | null) => {
@@ -54,7 +70,7 @@ export function EditorCanvasProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo<EditorCanvasContextValue>(
-    () => ({ canvasRef, containerRef, isReady, registerCanvas, historyRef, cropRef }),
+    () => ({ canvasRef, containerRef, isReady, registerCanvas, historyRef, cropRef, pagesRef, penToolRef }),
     [isReady, registerCanvas],
   )
 

@@ -5,6 +5,7 @@ import { IconButton } from '../common/IconButton'
 import { Button } from '../common/Button'
 import { useEditorHistory } from '../../hooks/editor/useEditorHistory'
 import { useEditorStore } from '../../stores/editor/editorStore'
+import { usePagesStore } from '../../stores/editor/pagesStore'
 import { useEditorCanvasContext } from '../../lib/editor/EditorCanvasContext'
 import { serializeDocument, deserializeDocument } from '../../lib/fabric/serialization'
 import { downloadBlob } from '../../lib/fabric/export'
@@ -12,18 +13,19 @@ import type { EditorDocument } from '../../types/editor'
 
 export function EditorHeader() {
   const { undo, redo, canUndo, canRedo, initHistory } = useEditorHistory()
-  const { canvasRef } = useEditorCanvasContext()
+  const { canvasRef, pagesRef } = useEditorCanvasContext()
   const openNewDocumentDialog = useEditorStore((s) => s.openNewDocumentDialog)
   const openExportDialog = useEditorStore((s) => s.openExportDialog)
   const setDocumentCreated = useEditorStore((s) => s.setDocumentCreated)
   const hasDocument = useEditorStore((s) => s.hasDocument)
   const toggleMobileProperties = useEditorStore((s) => s.toggleMobileProperties)
+  const setPagesState = usePagesStore((s) => s.setPagesState)
   const loadInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleSave = () => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const document = serializeDocument(canvas)
+    const document = serializeDocument(canvas, pagesRef.current)
     downloadBlob(new Blob([JSON.stringify(document)], { type: 'application/json' }), 'design.json')
   }
 
@@ -32,7 +34,11 @@ export function EditorHeader() {
     if (!canvas) return
     const text = await file.text()
     const document = JSON.parse(text) as EditorDocument
-    await deserializeDocument(canvas, document)
+    await deserializeDocument(canvas, pagesRef.current, document)
+    setPagesState(
+      pagesRef.current.pages.map((page) => ({ id: page.id, name: page.name })),
+      pagesRef.current.activePageId,
+    )
     setDocumentCreated(document.canvas.width, document.canvas.height)
     initHistory()
   }

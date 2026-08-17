@@ -1,4 +1,5 @@
 import { ColorPicker } from '../../common/ColorPicker'
+import { FillPicker } from '../../common/FillPicker'
 import { Slider } from '../../common/Slider'
 import { useShapeControls } from '../../../hooks/editor/useShapeControls'
 
@@ -9,7 +10,7 @@ export function ShapeObjectControls() {
   return (
     <div className="flex flex-col gap-3">
       <h3 className="text-xs font-semibold uppercase tracking-wide text-text-muted">Shape</h3>
-      <ColorPicker label="Fill" value={shapeProps.fill} onChange={(fill) => updateShape({ fill })} allowTransparent />
+      <FillPicker label="Fill" value={shapeProps.fill} onChange={(fill) => updateShape({ fill })} allowTransparent />
       <ColorPicker label="Stroke" value={shapeProps.stroke} onChange={(stroke) => updateShape({ stroke })} allowTransparent />
       <Slider
         label="Stroke Width"

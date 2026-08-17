@@ -1,4 +1,4 @@
-import { UploadCloud, Type, Shapes, Layers, PaintBucket } from 'lucide-react'
+import { UploadCloud, Type, Shapes, Pencil, PenTool as PenToolIcon, Layers, PaintBucket } from 'lucide-react'
 import { IconButton } from '../common/IconButton'
 import { useEditorStore } from '../../stores/editor/editorStore'
 import type { EditorTool } from '../../types/editor'
@@ -7,6 +7,8 @@ const TOOLS: { tool: EditorTool; icon: typeof UploadCloud; label: string }[] = [
   { tool: 'upload', icon: UploadCloud, label: 'Upload' },
   { tool: 'text', icon: Type, label: 'Text' },
   { tool: 'shapes', icon: Shapes, label: 'Shapes' },
+  { tool: 'draw', icon: Pencil, label: 'Draw' },
+  { tool: 'pen', icon: PenToolIcon, label: 'Pen Tool' },
   { tool: 'layers', icon: Layers, label: 'Layers' },
   { tool: 'background', icon: PaintBucket, label: 'Background' },
 ]

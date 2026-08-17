@@ -53,7 +53,7 @@ describe('getShapeProps / updateShapeProps', () => {
     const canvas = makeCanvas()
     const rect = addSquare(canvas)
     const props = getShapeProps(rect)
-    expect(props.fill).toMatch(/^#/)
+    expect(props.fill).toEqual({ type: 'solid', color: expect.stringMatching(/^#/) })
     expect(props.strokeWidth).toBeGreaterThanOrEqual(0)
     expect(props.cornerRadius).toBe(0)
   })
@@ -67,7 +67,7 @@ describe('getShapeProps / updateShapeProps', () => {
   it('updates fill/stroke/strokeWidth and re-renders', () => {
     const canvas = makeCanvas()
     const rect = addSquare(canvas)
-    updateShapeProps(canvas, rect, { fill: '#ff0000', stroke: '#00ff00', strokeWidth: 5 })
+    updateShapeProps(canvas, rect, { fill: { type: 'solid', color: '#ff0000' }, stroke: '#00ff00', strokeWidth: 5 })
     expect(rect.fill).toBe('#ff0000')
     expect(rect.stroke).toBe('#00ff00')
     expect(rect.strokeWidth).toBe(5)

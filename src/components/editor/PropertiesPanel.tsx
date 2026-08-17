@@ -14,6 +14,7 @@ import { ObjectRotationControls } from './objects/ObjectRotationControls'
 import { AlignmentControls } from './objects/AlignmentControls'
 import { ClippingMaskControls } from './objects/ClippingMaskControls'
 import { CropModeControls } from './objects/CropModeControls'
+import { EffectsControls } from './objects/EffectsControls'
 import { Button } from '../common/Button'
 import type { EditorObjectType } from '../../types/objects'
 
@@ -116,6 +117,9 @@ export function PropertiesPanel() {
           <ObjectSizeControls />
           <ObjectRotationControls />
         </div>
+      </Section>
+      <Section>
+        <EffectsControls />
       </Section>
       {objectType === 'image' && (
         <Section>

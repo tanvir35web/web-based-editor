@@ -3,6 +3,7 @@ import { createDefaultShapeProps } from '../editor/defaults'
 import { EDITOR_DEFAULTS } from '../editor/constants'
 import { tagObject, type EditorFabricObject } from './objects'
 import { getDocumentDimensions } from './canvas'
+import { fillValueToFabricFill, fabricFillToFillValue } from './fill'
 import type { ShapeObjectProps, ShapeType } from '../../types/objects'
 
 const DEFAULT_SIZE = 160
@@ -27,7 +28,7 @@ export function addSquare(canvas: Canvas): EditorFabricObject {
   const rect = new Rect({
     width: DEFAULT_SIZE,
     height: DEFAULT_SIZE,
-    fill: props.fill,
+    fill: fillValueToFabricFill(props.fill, { width: DEFAULT_SIZE, height: DEFAULT_SIZE }),
     stroke: props.stroke,
     strokeWidth: props.strokeWidth,
     rx: props.cornerRadius,
@@ -41,7 +42,7 @@ export function addRectangle(canvas: Canvas): EditorFabricObject {
   const rect = new Rect({
     width: DEFAULT_SIZE * 1.5,
     height: DEFAULT_SIZE,
-    fill: props.fill,
+    fill: fillValueToFabricFill(props.fill, { width: DEFAULT_SIZE * 1.5, height: DEFAULT_SIZE }),
     stroke: props.stroke,
     strokeWidth: props.strokeWidth,
     rx: props.cornerRadius,
@@ -55,7 +56,7 @@ export function addTriangle(canvas: Canvas): EditorFabricObject {
   const triangle = new Triangle({
     width: DEFAULT_SIZE,
     height: DEFAULT_SIZE,
-    fill: props.fill,
+    fill: fillValueToFabricFill(props.fill, { width: DEFAULT_SIZE, height: DEFAULT_SIZE }),
     stroke: props.stroke,
     strokeWidth: props.strokeWidth,
   })
@@ -64,9 +65,10 @@ export function addTriangle(canvas: Canvas): EditorFabricObject {
 
 export function addCircle(canvas: Canvas): EditorFabricObject {
   const props = createDefaultShapeProps()
+  const diameter = DEFAULT_SIZE
   const circle = new Circle({
     radius: DEFAULT_SIZE / 2,
-    fill: props.fill,
+    fill: fillValueToFabricFill(props.fill, { width: diameter, height: diameter }),
     stroke: props.stroke,
     strokeWidth: props.strokeWidth,
   })
@@ -79,7 +81,7 @@ function isRect(object: FabricObject): object is Rect {
 
 export function getShapeProps(object: FabricObject): ShapeObjectProps {
   return {
-    fill: typeof object.fill === 'string' ? object.fill : '#000000',
+    fill: fabricFillToFillValue(object.fill),
     stroke: typeof object.stroke === 'string' ? object.stroke : '#000000',
     strokeWidth: object.strokeWidth ?? 0,
     cornerRadius: isRect(object) ? (object.rx ?? 0) : 0,
@@ -88,7 +90,9 @@ export function getShapeProps(object: FabricObject): ShapeObjectProps {
 
 export function updateShapeProps(canvas: Canvas, object: FabricObject, patch: Partial<ShapeObjectProps>): void {
   const update: Record<string, unknown> = {}
-  if (patch.fill !== undefined) update.fill = patch.fill
+  if (patch.fill !== undefined) {
+    update.fill = fillValueToFabricFill(patch.fill, { width: object.width ?? 0, height: object.height ?? 0 })
+  }
   if (patch.stroke !== undefined) update.stroke = patch.stroke
   if (patch.strokeWidth !== undefined) update.strokeWidth = patch.strokeWidth
   if (patch.cornerRadius !== undefined && isRect(object)) {

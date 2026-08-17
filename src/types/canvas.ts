@@ -18,10 +18,12 @@ export interface CanvasBackground {
   color: string
 }
 
-export type ExportFormat = 'png' | 'jpeg'
+export type ExportFormat = 'png' | 'jpeg' | 'svg'
 
 export interface ExportOptions {
   format: ExportFormat
   quality: number // 0..1, jpeg only
   transparentBackground: boolean
+  /** 1 | 2 | 3 — ignored for svg, which is resolution-independent. */
+  resolutionMultiplier: number
 }

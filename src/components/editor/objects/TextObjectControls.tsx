@@ -1,6 +1,7 @@
 import { Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify } from 'lucide-react'
 import { Select } from '../../common/Select'
 import { ColorPicker } from '../../common/ColorPicker'
+import { FillPicker } from '../../common/FillPicker'
 import { Slider } from '../../common/Slider'
 import { IconButton } from '../../common/IconButton'
 import { NumberInput } from '../../common/NumberInput'
@@ -83,7 +84,7 @@ export function TextObjectControls() {
         </div>
       </div>
 
-      <ColorPicker label="Text Color" value={textProps.fill} onChange={(fill) => updateText({ fill })} />
+      <FillPicker label="Text Color" value={textProps.fill} onChange={(fill) => updateText({ fill })} />
       <ColorPicker
         label="Background Color"
         value={textProps.backgroundColor || 'transparent'}

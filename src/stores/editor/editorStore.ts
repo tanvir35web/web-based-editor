@@ -20,6 +20,8 @@ interface EditorState {
   isDrawingMode: boolean
   /** A crop session is in progress on some image — see useImageCrop. */
   isCropping: boolean
+  /** A pen-tool (anchor-point path) drawing session is in progress — see usePenTool. */
+  isPenToolActive: boolean
 
   setActiveTool: (tool: EditorTool) => void
   openNewDocumentDialog: () => void
@@ -32,6 +34,7 @@ interface EditorState {
   bumpObjectsVersion: () => void
   setIsDrawingMode: (isDrawingMode: boolean) => void
   setIsCropping: (isCropping: boolean) => void
+  setIsPenToolActive: (isPenToolActive: boolean) => void
   toggleMobileTools: () => void
   toggleMobileProperties: () => void
   closeMobilePanels: () => void
@@ -52,6 +55,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   isMobilePropertiesOpen: false,
   isDrawingMode: false,
   isCropping: false,
+  isPenToolActive: false,
 
   setActiveTool: (tool) => set({ activeTool: tool, isMobileToolsOpen: true }),
   openNewDocumentDialog: () => set({ isNewDocumentDialogOpen: true }),
@@ -65,6 +69,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   bumpObjectsVersion: () => set((state) => ({ objectsVersion: state.objectsVersion + 1 })),
   setIsDrawingMode: (isDrawingMode) => set({ isDrawingMode }),
   setIsCropping: (isCropping) => set({ isCropping }),
+  setIsPenToolActive: (isPenToolActive) => set({ isPenToolActive }),
   toggleMobileTools: () =>
     set((state) => ({ isMobileToolsOpen: !state.isMobileToolsOpen, isMobilePropertiesOpen: false })),
   toggleMobileProperties: () =>

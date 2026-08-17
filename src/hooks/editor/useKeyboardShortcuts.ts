@@ -5,6 +5,8 @@ import { useEditorHistory } from './useEditorHistory'
 import { useEditorStore } from '../../stores/editor/editorStore'
 import { useDocumentActions } from './useDocumentActions'
 import { useImageCrop } from './useImageCrop'
+import { usePenTool } from './usePenTool'
+import { usePages } from './usePages'
 import { deleteObjects, duplicateObject, asEditorObject } from '../../lib/fabric/objects'
 import { ACCEPTED_IMAGE_TYPES } from '../../lib/editor/constants'
 
@@ -23,6 +25,8 @@ export function useKeyboardShortcuts() {
   const hasDocument = useEditorStore((s) => s.hasDocument)
   const { uploadImage } = useDocumentActions()
   const { isCropping, confirmCrop, cancelCropSession } = useImageCrop()
+  const { isPenToolActive, finishPath, cancelPenToolSession, removeLastPoint } = usePenTool()
+  const { pages, activePageId, switchPage } = usePages()
   const clipboard = useRef<FabricObject | null>(null)
 
   useEffect(() => {
@@ -40,6 +44,23 @@ export function useKeyboardShortcuts() {
         } else if (event.key === 'Enter') {
           event.preventDefault()
           confirmCrop()
+        }
+        return
+      }
+
+      // While a pen-tool session is active there's no active object at all
+      // (skipTargetFind keeps selection empty) — every other shortcut is
+      // suppressed the same way the crop-mode block above does.
+      if (isPenToolActive) {
+        if (event.key === 'Escape') {
+          event.preventDefault()
+          cancelPenToolSession()
+        } else if (event.key === 'Enter') {
+          event.preventDefault()
+          finishPath(false)
+        } else if (event.key === 'Backspace' || event.key === 'Delete') {
+          event.preventDefault()
+          removeLastPoint()
         }
         return
       }
@@ -70,6 +91,15 @@ export function useKeyboardShortcuts() {
       if (isMeta && event.key.toLowerCase() === 'y') {
         event.preventDefault()
         void redo()
+        return
+      }
+
+      if (isMeta && event.altKey && (event.key === 'ArrowRight' || event.key === 'ArrowLeft')) {
+        event.preventDefault()
+        const currentIndex = pages.findIndex((page) => page.id === activePageId)
+        const targetIndex = event.key === 'ArrowRight' ? currentIndex + 1 : currentIndex - 1
+        const target = pages[targetIndex]
+        if (target) void switchPage(target.id)
         return
       }
 
@@ -155,7 +185,25 @@ export function useKeyboardShortcuts() {
       window.removeEventListener('keyup', handleKeyUp)
       window.removeEventListener('paste', handlePaste)
     }
-  }, [canvasRef, undo, redo, pushState, bumpObjectsVersion, uploadImage, hasDocument, isCropping, confirmCrop, cancelCropSession])
+  }, [
+    canvasRef,
+    undo,
+    redo,
+    pushState,
+    bumpObjectsVersion,
+    uploadImage,
+    hasDocument,
+    isCropping,
+    confirmCrop,
+    cancelCropSession,
+    isPenToolActive,
+    finishPath,
+    cancelPenToolSession,
+    removeLastPoint,
+    pages,
+    activePageId,
+    switchPage,
+  ])
 }
 
 export const KEYBOARD_SHORTCUTS_HELP = [
@@ -165,8 +213,10 @@ export const KEYBOARD_SHORTCUTS_HELP = [
   { keys: 'Ctrl/Cmd + C / V', action: 'Copy / Paste' },
   { keys: 'Ctrl/Cmd + D', action: 'Duplicate' },
   { keys: 'Ctrl/Cmd + A', action: 'Select all' },
-  { keys: 'Escape', action: 'Deselect (or cancel crop)' },
-  { keys: 'Enter', action: 'Apply crop' },
+  { keys: 'Escape', action: 'Deselect (or cancel crop / pen tool)' },
+  { keys: 'Enter', action: 'Apply crop (or finish pen path)' },
+  { keys: 'Backspace', action: 'Remove last pen-tool point' },
   { keys: 'Arrow keys', action: 'Nudge selection' },
   { keys: 'Shift + Arrow', action: 'Nudge faster' },
+  { keys: 'Ctrl/Cmd + Alt + Arrow', action: 'Next / previous page' },
 ]

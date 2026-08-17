@@ -53,5 +53,28 @@ export const FONT_WEIGHTS = [
   { label: 'Black', value: 900 },
 ]
 
-export const OBJECT_ID_KEY = 'id'
-export const CUSTOM_OBJECT_PROPERTIES = ['id', 'name', 'locked'] as const
+/**
+ * Custom properties Fabric must round-trip through toObject/loadFromJSON.
+ * Lives here (rather than serialization.ts) so lib/fabric/pages.ts can use
+ * it too without an import cycle between pages.ts and serialization.ts.
+ */
+export const CUSTOM_PROPERTIES = ['id', 'name', 'locked', 'editorType', 'adjustments'] as const
+
+export const BLEND_MODES: { value: GlobalCompositeOperation; label: string }[] = [
+  { value: 'source-over', label: 'Normal' },
+  { value: 'multiply', label: 'Multiply' },
+  { value: 'screen', label: 'Screen' },
+  { value: 'overlay', label: 'Overlay' },
+  { value: 'darken', label: 'Darken' },
+  { value: 'lighten', label: 'Lighten' },
+  { value: 'color-dodge', label: 'Color Dodge' },
+  { value: 'color-burn', label: 'Color Burn' },
+  { value: 'hard-light', label: 'Hard Light' },
+  { value: 'soft-light', label: 'Soft Light' },
+  { value: 'difference', label: 'Difference' },
+  { value: 'exclusion', label: 'Exclusion' },
+  { value: 'hue', label: 'Hue' },
+  { value: 'saturation', label: 'Saturation' },
+  { value: 'color', label: 'Color' },
+  { value: 'luminosity', label: 'Luminosity' },
+]

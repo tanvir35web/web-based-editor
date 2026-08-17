@@ -2,20 +2,23 @@ import { useCallback } from 'react'
 import { useEditorCanvasContext } from '../../lib/editor/EditorCanvasContext'
 import { useEditorStore } from '../../stores/editor/editorStore'
 import { useCanvasStore } from '../../stores/editor/canvasStore'
+import { usePagesStore } from '../../stores/editor/pagesStore'
 import { useEditorHistory } from './useEditorHistory'
 import { useCanvasZoom } from './useCanvasZoom'
 import { setCanvasDimensions, setCanvasBackground } from '../../lib/fabric/canvas'
+import { createBlankPageRecord } from '../../lib/fabric/pages'
 import { addImageFromUrl } from '../../lib/fabric/images'
 import { validateImageFile } from '../../lib/editor/validation'
 import { EDITOR_DEFAULTS } from '../../lib/editor/constants'
 import type { NewDocumentOptions } from '../../types/canvas'
 
 export function useDocumentActions() {
-  const { canvasRef } = useEditorCanvasContext()
+  const { canvasRef, pagesRef } = useEditorCanvasContext()
   const setDocumentCreated = useEditorStore((s) => s.setDocumentCreated)
   const setLoading = useEditorStore((s) => s.setLoading)
   const setError = useEditorStore((s) => s.setError)
   const setBackground = useCanvasStore((s) => s.setBackground)
+  const setPagesState = usePagesStore((s) => s.setPagesState)
   const { initHistory } = useEditorHistory()
   const { zoomToFit } = useCanvasZoom()
 
@@ -27,11 +30,17 @@ export function useDocumentActions() {
       setCanvasDimensions(canvas, options.width, options.height)
       setCanvasBackground(canvas, options.backgroundColor)
       setBackground({ mode: options.backgroundColor === 'transparent' ? 'transparent' : 'custom', color: options.backgroundColor })
+
+      const page = createBlankPageRecord('Page 1', options.backgroundColor)
+      pagesRef.current.pages = [page]
+      pagesRef.current.activePageId = page.id
+      setPagesState([{ id: page.id, name: page.name }], page.id)
+
       setDocumentCreated(options.width, options.height)
       initHistory()
       requestAnimationFrame(zoomToFit)
     },
-    [canvasRef, setBackground, setDocumentCreated, initHistory, zoomToFit],
+    [canvasRef, pagesRef, setBackground, setPagesState, setDocumentCreated, initHistory, zoomToFit],
   )
 
   const addImageToDocument = useCallback(

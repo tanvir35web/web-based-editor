@@ -27,7 +27,7 @@ export function createDefaultTextProps(): TextObjectProps {
     fontStyle: 'normal',
     underline: false,
     linethrough: false,
-    fill: EDITOR_DEFAULTS.DEFAULT_TEXT_COLOR,
+    fill: { type: 'solid', color: EDITOR_DEFAULTS.DEFAULT_TEXT_COLOR },
     backgroundColor: 'transparent',
     opacity: 100,
     charSpacing: 0,
@@ -38,7 +38,7 @@ export function createDefaultTextProps(): TextObjectProps {
 
 export function createDefaultShapeProps(): ShapeObjectProps {
   return {
-    fill: EDITOR_DEFAULTS.DEFAULT_SHAPE_FILL,
+    fill: { type: 'solid', color: EDITOR_DEFAULTS.DEFAULT_SHAPE_FILL },
     stroke: EDITOR_DEFAULTS.DEFAULT_SHAPE_STROKE,
     strokeWidth: EDITOR_DEFAULTS.DEFAULT_SHAPE_STROKE_WIDTH,
     cornerRadius: 0,

@@ -2,6 +2,8 @@ import { ToolRail } from './ToolRail'
 import { UploadPanel } from './panels/UploadPanel'
 import { TextPanel } from './panels/TextPanel'
 import { ShapesPanel } from './panels/ShapesPanel'
+import { DrawPanel } from './panels/DrawPanel'
+import { PenToolPanel } from './panels/PenToolPanel'
 import { LayersPanel } from './panels/LayersPanel'
 import { BackgroundPanel } from './panels/BackgroundPanel'
 import { useEditorStore } from '../../stores/editor/editorStore'
@@ -12,6 +14,8 @@ const PANELS = {
   upload: UploadPanel,
   text: TextPanel,
   shapes: ShapesPanel,
+  draw: DrawPanel,
+  pen: PenToolPanel,
   image: null,
   layers: LayersPanel,
   background: BackgroundPanel,

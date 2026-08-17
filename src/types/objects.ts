@@ -1,3 +1,5 @@
+import type { FillValue } from './fill'
+
 /** Discriminated union of every object type the editor can place on the artboard. */
 export type EditorObjectType = 'image' | 'textbox' | 'rect' | 'circle' | 'triangle' | 'path'
 
@@ -38,7 +40,7 @@ export interface TextObjectProps {
   fontStyle: 'normal' | 'italic'
   underline: boolean
   linethrough: boolean
-  fill: string
+  fill: FillValue
   backgroundColor: string
   opacity: number // 0..100
   charSpacing: number
@@ -47,9 +49,20 @@ export interface TextObjectProps {
 }
 
 export interface ShapeObjectProps {
-  fill: string
+  fill: FillValue
   stroke: string
   strokeWidth: number
   /** Corner radius in px — only meaningful for rect-type shapes. */
   cornerRadius: number
 }
+
+/** Drop-shadow settings, shared across every object type (image/text/shape/path). */
+export interface ShadowProps {
+  enabled: boolean
+  color: string
+  blur: number
+  offsetX: number
+  offsetY: number
+}
+
+export type BlendMode = GlobalCompositeOperation

@@ -1,8 +1,13 @@
 import { useState } from 'react'
-import { HexColorPicker } from 'react-colorful'
+import { HexAlphaColorPicker } from 'react-colorful'
 import * as PopoverPrimitive from '@radix-ui/react-popover'
+import { Pipette, Plus } from 'lucide-react'
 import { cn } from '../../lib/utils/cn'
 import { isValidHexColor, normalizeHexColor } from '../../lib/utils/color'
+import { isEyeDropperSupported, pickColorFromScreen } from '../../lib/utils/eyedropper'
+import { usePaletteStore } from '../../stores/editor/paletteStore'
+import { ColorSwatchGrid } from './ColorSwatchGrid'
+import { IconButton } from './IconButton'
 
 interface ColorPickerProps {
   label?: string
@@ -14,10 +19,19 @@ interface ColorPickerProps {
 export function ColorPicker({ label, value, onChange, allowTransparent }: ColorPickerProps) {
   const [draft, setDraft] = useState(value)
   const isTransparent = value === 'transparent'
+  const savedColors = usePaletteStore((s) => s.savedColors)
+  const recentColors = usePaletteStore((s) => s.recentColors)
+  const addSavedColor = usePaletteStore((s) => s.addSavedColor)
+  const removeSavedColor = usePaletteStore((s) => s.removeSavedColor)
+  const pushRecentColor = usePaletteStore((s) => s.pushRecentColor)
 
   const commitDraft = (next: string) => {
     setDraft(next)
-    if (isValidHexColor(next)) onChange(normalizeHexColor(next))
+    if (isValidHexColor(next)) {
+      const normalized = normalizeHexColor(next)
+      onChange(normalized)
+      pushRecentColor(normalized)
+    }
   }
 
   return (
@@ -45,11 +59,35 @@ export function ColorPicker({ label, value, onChange, allowTransparent }: ColorP
               sideOffset={8}
               className="z-50 w-[200px] rounded-lg border border-surface-border bg-surface-2 p-3 shadow-xl"
             >
-              <HexColorPicker
-                color={isTransparent ? '#ffffff' : value}
-                onChange={commitDraft}
-                style={{ width: '100%' }}
-              />
+              <div className="flex flex-col gap-2">
+                <HexAlphaColorPicker
+                  color={isTransparent ? '#ffffff' : draft}
+                  onChange={commitDraft}
+                  style={{ width: '100%' }}
+                />
+                <div className="flex items-center gap-1.5">
+                  {isEyeDropperSupported() && (
+                    <IconButton
+                      size="sm"
+                      icon={<Pipette className="h-3.5 w-3.5" />}
+                      label="Pick color from screen"
+                      onClick={() => {
+                        void pickColorFromScreen().then((picked) => {
+                          if (picked) commitDraft(picked)
+                        })
+                      }}
+                    />
+                  )}
+                  <IconButton
+                    size="sm"
+                    icon={<Plus className="h-3.5 w-3.5" />}
+                    label="Save color to palette"
+                    onClick={() => addSavedColor(isTransparent ? 'transparent' : normalizeHexColor(draft))}
+                  />
+                </div>
+                <ColorSwatchGrid label="Saved" colors={savedColors} onSelect={commitDraft} onRemove={removeSavedColor} />
+                <ColorSwatchGrid label="Recent" colors={recentColors} onSelect={commitDraft} />
+              </div>
               {allowTransparent && (
                 <button
                   type="button"
